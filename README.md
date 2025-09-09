@@ -3,6 +3,6 @@ A small compiler for a made-up language called "C--" inspired by the C++ syntax,
 
 Collaborators:
 
-[Frederico Maia](https://github.com/FredMaia)
-[Guilherme Azevedo](https://github.com/GuiAzevedo04)
+[Frederico Maia](https://github.com/FredMaia)  
+[Guilherme Azevedo](https://github.com/GuiAzevedo04)  
 [Mateus Rodrigues](https://github.com/milanimateus)
