@@ -1,8 +1,23 @@
-123124E+2312
-tessteespaco
-//teste     
-        identifica
-13$ota
-asdasdasd //asdasdasd    
-13 > 12
-13>12
+// Programa de teste do analisador léxico
+
+int x;
+bool flag;
+
+x = -10;
+flag = true;
+
+if (x >= 0) {
+    print(x);
+} else {
+    /* comentário
+       de múltiplas linhas */
+    read(x);
+}
+
+while (flag && x < 100) {
+    x = x + 1;
+    flag = false;
+}
+
+// Exemplo de erro léxico
+$invalido
