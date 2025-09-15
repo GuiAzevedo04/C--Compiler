@@ -1,23 +1,22 @@
-// Programa de teste do analisador léxico
+int a, teste__b;
+a = 42;
+b = -7;
+flag = !flag || (a > b && b <= 100);
 
-int x;
-bool flag;
-
-x = -10;
-flag = true;
-
-if (x >= 0) {
-    print(x);
+if (a == 42) {
+    print(a);
 } else {
-    /* comentário
-       de múltiplas linhas */
-    read(x);
+    while (b != 0) {
+        b = b - 1;
+    }
 }
 
-while (flag && x < 100) {
-    x = x + 1;
-    flag = false;
-}
+/* Comentários */
+// comentário de linha única
+/* comentário
+   multilinha */
 
-// Exemplo de erro léxico
-$invalido
+int erro1 = 12.5;   // número com ponto não permitido
+int erro2 = 2abc;   // identificador inválido
+int erro3 = 10 @ 2; // caractere inválido '@'
+/* comentário não fechado...
