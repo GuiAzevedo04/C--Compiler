@@ -22,12 +22,9 @@ Simbolo *tabela[HASH_SIZE];  // vetor de listas
 unsigned int hash(char *lexema) {
     unsigned int h = 0;
     for (int i = 0; lexema[i] != '\0'; i++) {
-        h = (h << 4) + lexema[i];  // desloca e soma caractere
-        unsigned int g = h & 0xF0000000;
-        if (g) h ^= g >> 24;
-        h &= ~g;
+        h = h * 37 + lexema[i];  // multiplica por um número primo e soma o caractere
     }
-    return h % HASH_SIZE;
+    return h % HASH_SIZE;        // garante que caia dentro da tabela
 }
 
 void inserir_simbolo(char *lexema) {
@@ -65,8 +62,7 @@ void imprimir_tabela() {
 digito                  [0-9]
 letra                   [a-zA-Z]
 identificador           {letra}({letra}|{digito}|\_)*
-expoente                \E(\+|\-)? 
-numero_inteiro          \-?{digito}+({expoente}{digito}+)?
+numero_inteiro          \-?{digito}+
 
 op_relacional           "=="|"!="|"<"|"<="|">"|">="
 atribuicao              "="
