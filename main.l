@@ -60,9 +60,10 @@ void imprimir_tabela() {
 %}
 
 digito                  [0-9]
+digito_nao_zero         [1-9]
 letra                   [a-zA-Z]
 identificador           {letra}({letra}|{digito}|\_)*
-numero_inteiro          \-?{digito}+
+numero_inteiro          (0|-?{digito_nao_zero}{digito}*)
 
 op_relacional           "=="|"!="|"<"|"<="|">"|">="
 atribuicao              "="
@@ -129,4 +130,5 @@ int main(int argc, char *argv[]) {
 
     imprimir_tabela();
     return 0;
+
 }
