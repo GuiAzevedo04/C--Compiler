@@ -42,7 +42,7 @@
 %left OPRELACIONAL         
 %left '+' '-'              
 %left '*' '/' '%'           
-%right UMINUS                Menos unário: -x */
+%right UMINUS                  /* Menos unário: -x */
 %right OPLOGICO_NOT            /* Negação lógica: !x (maior precedência) */
 
 /* ========== RESOLVER DANGLING ELSE ========== */
@@ -152,8 +152,8 @@ fator:
     | STRING
     | ID
     | ABRE_PAREN expressao FECHA_PAREN
-    | '-' fator %prec UMINUS                     menos unário: -5 */
-    | '+' fator %prec UMINUS                     mais unário: +5 */
+    | '-' fator %prec UMINUS                    /* menos unário: -5 */
+    | '+' fator %prec UMINUS                    /* mais unário: +5 */
     | OPLOGICO_NOT fator %prec OPLOGICO_NOT                           
     ;
 
