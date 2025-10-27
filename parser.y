@@ -22,33 +22,34 @@
 %token NUMERO STRING
 %token ID
 
-%token OPRELACIONAL         
-%token OPLOGICO_OR           
-%token OPLOGICO_AND         
-%token ATRIBUICAO          
+%token OPRELACIONAL                 /* ==, !=, <, <=, >, >= */
+%token OPLOGICO_OR                  /* || */
+%token OPLOGICO_AND                 /* && */
+%token ATRIBUICAO                   /* = */         
 
-%token TIPOS                
+%token TIPOS                        /* int, bool */
 
 %token IF ELSE WHILE PRINT READ
 
-%token PONTOVIRGULA VIRGULA
-%token ABRE_CHAVE FECHA_CHAVE
-%token ABRE_PAREN FECHA_PAREN
+%token PONTOVIRGULA VIRGULA         /* ; , */
+%token ABRE_CHAVE FECHA_CHAVE       /* { } */
+%token ABRE_PAREN FECHA_PAREN       /* ( ) */
 
 /* ========== PRECEDÊNCIA E ASSOCIATIVIDADE ========== */
 /* Ordem: do menor para o maior (de baixo para cima na execução) */
 
-%right ATRIBUICAO          
-%left OPLOGICO_OR             
-%left OPLOGICO_AND          
-%left OPRELACIONAL         
-%left '+' '-'              
-%left '*' '/' '%'           
-%right UMINUS                  /* Menos unário: -x */
-%right OPLOGICO_NOT            /* Negação lógica: !x (maior precedência) */
+%right ATRIBUICAO               /* = (Associatividade à direita para a cadeia a = b = c) */
+%left OPLOGICO_OR               /* || */
+%left OPLOGICO_AND              /* && */
+%left OPRELACIONAL              /* ==, !=, <, <=, >, >= */
+%left '+' '-'                   /* Soma e Subtração */
+%left '*' '/' '%'               * Multiplicação, Divisão e Módulo */
+
+%right UMINUS                   /* Menos unário: -x */
+%right OPLOGICO_NOT             /* Negação lógica: !x (maior precedência) */
 
 /* ========== RESOLVER DANGLING ELSE ========== */
-/* O else deve se associar ao if mais próximo */
+/* Garante que o else deve se associar ao if mais próximo */
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -57,7 +58,7 @@
 %%
 
 /* ==================== GRAMÁTICA ==================== */
-
+/*Ponto de entrada: a gramática é uma lista de comandos*/
 inicio: 
     lista_comandos
     ;
@@ -75,25 +76,25 @@ comando:
     | bloco
     | entrada_saida
     | PONTOVIRGULA                                                                                        
-    | error PONTOVIRGULA {yyerrok;}        /* RECUPERAÇÃO: Descarta até o próximo ';' */
-    | error FECHA_CHAVE  {yyerrok;}                                                                      /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
+    | error PONTOVIRGULA {yyerrok;}         /* RECUPERAÇÃO: Descarta até o próximo ';' */
+    | error FECHA_CHAVE  {yyerrok;}         /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
     ;
 
 declaracao:
     TIPOS lista_ids PONTOVIRGULA              
-    | TIPOS lista_ids error PONTOVIRGULA      {yyerrok;}                         /* RECUPERAÇÃO: Tenta encontrar o ';' perdido */
+    | TIPOS lista_ids error PONTOVIRGULA      {yyerrok;}        /* RECUPERAÇÃO: Descarta até o próximo ';' */
     ;
 
 
 lista_ids:
     ID
-    | ID ATRIBUICAO expressao                           /* int x = 5; */
-    | lista_ids VIRGULA ID                              /* int x, y; */
-    | lista_ids VIRGULA ID ATRIBUICAO expressao         /* int x, y = 10; */
+    | ID ATRIBUICAO expressao                              /* Ex: x = 5 */
+    | lista_ids VIRGULA ID                                 /* Ex: x, y */
+    | lista_ids VIRGULA ID ATRIBUICAO expressao            /* Ex: x, y = 10 */
     ;
 
 atribuicao:
-    ID ATRIBUICAO expressao PONTOVIRGULA
+    ID ATRIBUICAO expressao PONTOVIRGULA                   /* Ex: x = y + 1; */
     ;
 
 condicional:
@@ -111,8 +112,8 @@ bloco:
     ;
 
 entrada_saida:
-    PRINT ABRE_PAREN lista_expressoes FECHA_PAREN PONTOVIRGULA
-    | READ ABRE_PAREN ID FECHA_PAREN PONTOVIRGULA
+    PRINT ABRE_PAREN lista_expressoes FECHA_PAREN PONTOVIRGULA      /* Ex: print(x, "valor"); */
+    | READ ABRE_PAREN ID FECHA_PAREN PONTOVIRGULA                   /* Ex: read(y); */
     ;
 
  lista_expressoes:
@@ -194,7 +195,7 @@ int main(int argc, char **argv) {
         if (yyout != stdout) fclose(yyout);
         return 0;
     } else {
-        printf("\n ============== ANÁLISE FINALIZADA PORÉM COM ERROS ============== \n");
+        printf("\n ============== ANÁLISE FINALIZADA COM ERROS ENCONTRADOS ============== \n");
         
         if (yyin != stdin) fclose(yyin);
         if (yyout != stdout) fclose(yyout);
