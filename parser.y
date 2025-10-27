@@ -42,7 +42,7 @@
 %left OPRELACIONAL         
 %left '+' '-'              
 %left '*' '/' '%'           
-/*%right UMINUS                Menos unário: -x */
+%right UMINUS                Menos unário: -x */
 %right OPLOGICO_NOT            /* Negação lógica: !x (maior precedência) */
 
 /* ========== RESOLVER DANGLING ELSE ========== */
@@ -63,6 +63,7 @@ inicio:
 lista_comandos:
     comando
     | lista_comandos comando
+    | lista_comandos error PONTOVIRGULA /* Recuperação adicional na lista */
     ;
 
 comando:
@@ -72,15 +73,16 @@ comando:
     | laco
     | bloco
     | entrada_saida
-    | PONTOVIRGULA              /* comando vazio */
+    | PONTOVIRGULA                      /* comando vazio */
+    | error PONTOVIRGULA  /* RECUPERAÇÃO: Descarta até o próximo ';' */
+    | error FECHA_CHAVE   /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
     ;
 
 declaracao:
-    TIPOS lista_ids PONTOVIRGULA
-    {
-        yyerror("Erro de Sintaxe: Ponto e vírgula (;) esperado após a lista de IDs na declaração.");
-    }
+    TIPOS lista_ids PONTOVIRGULA                /* Declaração correta */
+    | TIPOS lista_ids error PONTOVIRGULA        /* RECUPERAÇÃO: Tenta encontrar o ';' perdido */
     ;
+
 
 lista_ids:
     ID
@@ -150,8 +152,8 @@ fator:
     | STRING
     | ID
     | ABRE_PAREN expressao FECHA_PAREN
-    | '-' fator /*%prec UMINUS                     menos unário: -5 */
-    | '+' fator /*%prec UMINUS                     mais unário: +5 */
+    | '-' fator %prec UMINUS                     menos unário: -5 */
+    | '+' fator %prec UMINUS                     mais unário: +5 */
     | OPLOGICO_NOT fator %prec OPLOGICO_NOT                           
     ;
 
