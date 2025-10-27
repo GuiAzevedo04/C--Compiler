@@ -15,6 +15,8 @@
     int yyparse(void);
 %}
 
+%define parse.error verbose
+
 /* ========== DEFINIÇÃO DOS TOKENS ========== */
 
 %token NUMERO STRING
@@ -72,35 +74,35 @@ comando:
     | laco
     | bloco
     | entrada_saida
-    | PONTOVIRGULA                      /* comando vazio */
-    | error PONTOVIRGULA  /* RECUPERAÇÃO: Descarta até o próximo ';' */
-    | error FECHA_CHAVE   /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
+    | PONTOVIRGULA                                                                                        
+    | error PONTOVIRGULA {yyerrok;}        /* RECUPERAÇÃO: Descarta até o próximo ';' */
+    | error FECHA_CHAVE  {yyerrok;}                                                                      /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
     ;
 
 declaracao:
-    TIPOS lista_ids PONTOVIRGULA                /* Declaração correta */
-    | TIPOS lista_ids error PONTOVIRGULA        /* RECUPERAÇÃO: Tenta encontrar o ';' perdido */
+    TIPOS lista_ids PONTOVIRGULA              
+    | TIPOS lista_ids error PONTOVIRGULA      {yyerrok;}                         /* RECUPERAÇÃO: Tenta encontrar o ';' perdido */
     ;
 
 
 lista_ids:
     ID
-    | ID ATRIBUICAO expressao                           /* int x = 5; */
+    | ID ATRIBUICAO expressao_binaria                           /* int x = 5; */
     | lista_ids VIRGULA ID                              /* int x, y; */
-    | lista_ids VIRGULA ID ATRIBUICAO expressao         /* int x, y = 10; */
+    | lista_ids VIRGULA ID ATRIBUICAO expressao_binaria         /* int x, y = 10; */
     ;
 
 atribuicao:
-    ID ATRIBUICAO expressao PONTOVIRGULA
+    ID ATRIBUICAO expressao_binaria PONTOVIRGULA
     ;
 
 condicional:
-    IF ABRE_PAREN expressao FECHA_PAREN comando %prec LOWER_THAN_ELSE
-    | IF ABRE_PAREN expressao FECHA_PAREN comando ELSE comando
+    IF ABRE_PAREN expressao_binaria FECHA_PAREN comando %prec LOWER_THAN_ELSE
+    | IF ABRE_PAREN expressao_binaria FECHA_PAREN comando ELSE comando
     ;
 
 laco:
-    WHILE ABRE_PAREN expressao FECHA_PAREN comando
+    WHILE ABRE_PAREN expressao_binaria FECHA_PAREN comando
     ;
 
 bloco:
@@ -114,13 +116,9 @@ entrada_saida:
     ;
 
  lista_expressoes:
-    expressao
-    | lista_expressoes VIRGULA expressao
-    ; 
-
-expressao:
     expressao_binaria
-    ;
+    | lista_expressoes VIRGULA expressao_binaria
+    ; 
 
 expressao_binaria:
     fator
@@ -141,7 +139,7 @@ fator:
     NUMERO
     | STRING
     | ID
-    | ABRE_PAREN expressao FECHA_PAREN
+    | ABRE_PAREN expressao_binaria FECHA_PAREN
     | '-' fator %prec UMINUS
     | '+' fator %prec UMINUS
     | OPLOGICO_NOT fator %prec OPLOGICO_NOT
@@ -153,10 +151,10 @@ fator:
 
 void yyerror(const char *s) {
     fprintf(stderr, "=============== ERRO SINTÁTICO DETECTADO =============== \n");
-    fprintf(stderr, "Linha:  %-38d\n", yylineno);
-    fprintf(stderr, "Coluna: %-38d\n", coluna);
-    fprintf(stderr, "Mensagem: %-36s \n", s);
-    fprintf(stderr, "Texto encontrado: '%-28s' \n", yytext);
+    fprintf(stderr, "Linha:  %d\n", yylineno);
+    fprintf(stderr, "Coluna: %d\n", coluna);
+    fprintf(stderr, "Informação do erro: %s \n", s);
+    fprintf(stderr, "Texto encontrado: %s \n", yytext);
     fprintf(stderr, "\n\n");
 }
 
@@ -184,19 +182,19 @@ int main(int argc, char **argv) {
         yyout = stdout;
     }
 
-    printf("\n ============== ANALISADOR LÉXICO E SINTÁTICO INICIADO  ============== \n");
+    printf("\n ============== ANALISADOR INICIADO  ============== \n");
     
     int resultado = yyparse();
     
     if (resultado == 0) {
-        printf("\n ============== ANÁLISE BEM SUCEDIDA ============== \n");
+        printf("\n ============== ANÁLISE FINALIZADA COM SUCESSO ============== \n");
         imprimir_tabela();
         
         if (yyin != stdin) fclose(yyin);
         if (yyout != stdout) fclose(yyout);
         return 0;
     } else {
-        printf("\n ============== ANÁLISE COM ERROS ============== \n");
+        printf("\n ============== ANÁLISE FINALIZADA PORÉM COM ERROS ============== \n");
         
         if (yyin != stdin) fclose(yyin);
         if (yyout != stdout) fclose(yyout);
