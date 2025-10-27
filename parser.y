@@ -172,17 +172,6 @@ int main(int argc, char **argv) {
         yyin = stdin;
     }
 
-    if (argc > 2) {
-        yyout = fopen(argv[2], "w");
-        if (!yyout) {
-            fprintf(stderr, "Erro ao criar arquivo de saída: %s\n", argv[2]);
-            return 1;
-        }
-        printf("Saída dos tokens em: %s\n", argv[2]);
-    } else {
-        yyout = stdout;
-    }
-
     printf("\n ============== ANALISADOR INICIADO  ============== \n");
     
     int resultado = yyparse();
