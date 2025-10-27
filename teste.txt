@@ -1,22 +1,14 @@
-int a, teste__b;
-a = 42;
-b = -7;
-flag = !flag || (a > b && b <= 100);
-
-if (a == 42) {
-    print(a);
-} else {
-    while (b != 0) {
-        b = b - 1;
-    }
+int a , b;
+int x = 10;
+if(3 > 2){
+    {{{{}}}};;;;;;
 }
+int c = 3
 
-/* Comentários */
-// comentário de linha única
-/* comentário
-   multilinha */
+print(a);
 
-int erro1 = 12.5;   // número com ponto não permitido
-int erro2 = 2abc;   // identificador inválido
-int erro3 = 10 @ 2; // caractere inválido '@'
-/* comentário não fechado...
+while(3 > a{
+
+d = 10;
+
+int f, g = 100;
