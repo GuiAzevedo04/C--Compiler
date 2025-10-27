@@ -43,7 +43,7 @@
 %left OPLOGICO_AND              /* && */
 %left OPRELACIONAL              /* ==, !=, <, <=, >, >= */
 %left '+' '-'                   /* Soma e Subtração */
-%left '*' '/' '%'               * Multiplicação, Divisão e Módulo */
+%left '*' '/' '%'               /* Multiplicação, Divisão e Módulo */
 
 %right UMINUS                   /* Menos unário: -x */
 %right OPLOGICO_NOT             /* Negação lógica: !x (maior precedência) */
