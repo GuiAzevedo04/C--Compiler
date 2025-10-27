@@ -99,38 +99,38 @@ other                   .
 /* −−−−−−−−−−−−−−−−−−−−−−−−−−−−− Rules −−−−−−−−−−−−−−−−−−−−−−−−−−−−−*/
 %} 
 
-"if"                        { fprintf(yyout,"Linha %d, Coluna %d: %s (IF)\n", yylineno, coluna, yytext); coluna += yyleng; return IF; }
-"else"                      { fprintf(yyout,"Linha %d, Coluna %d: %s (ELSE)\n", yylineno, coluna, yytext); coluna += yyleng; return ELSE; }
-"while"                     { fprintf(yyout,"Linha %d, Coluna %d: %s (WHILE)\n", yylineno, coluna, yytext); coluna += yyleng; return WHILE; }
-"print"                     { fprintf(yyout,"Linha %d, Coluna %d: %s (PRINT)\n", yylineno, coluna, yytext); coluna += yyleng; return PRINT; }
-"read"                      { fprintf(yyout,"Linha %d, Coluna %d: %s (READ)\n", yylineno, coluna, yytext); coluna += yyleng; return READ; }
+"if"                        { coluna += yyleng; return IF; }
+"else"                      { coluna += yyleng; return ELSE; }
+"while"                     { coluna += yyleng; return WHILE; }
+"print"                     { coluna += yyleng; return PRINT; }
+"read"                      { coluna += yyleng; return READ; }
 
-{numero_inteiro}            { fprintf(yyout,"Linha %d, Coluna %d: %s (NUMERO)\n", linha, coluna, yytext); coluna += yyleng; return NUMERO; }
-{string}                    { fprintf(yyout,"Linha %d, Coluna %d: %s (STRING)\n", yylineno, coluna, yytext); coluna += yyleng; return STRING; }
-{op_relacional}             { fprintf(yyout,"Linha %d, Coluna %d: %s (OPRELACIONAL)\n", linha, coluna, yytext); coluna += yyleng; return OPRELACIONAL;}
+{numero_inteiro}            { coluna += yyleng; return NUMERO; }
+{string}                    { coluna += yyleng; return STRING; }
+{op_relacional}             { coluna += yyleng; return OPRELACIONAL;}
 
-{atribuicao}                { fprintf(yyout,"Linha %d, Coluna %d: %s (ATRIBUICAO)\n", linha, coluna, yytext); coluna += yyleng; return ATRIBUICAO;}
+{atribuicao}                { coluna += yyleng; return ATRIBUICAO;}
 
-"+"                         { fprintf(yyout,"Linha %d, Coluna %d: %s (MAIS)\n", yylineno, coluna, yytext); coluna += yyleng; return '+'; }
-"-"                         { fprintf(yyout,"Linha %d, Coluna %d: %s (MENOS)\n", yylineno, coluna, yytext); coluna += yyleng; return '-'; }
-"*"                         { fprintf(yyout,"Linha %d, Coluna %d: %s (MULT)\n", yylineno, coluna, yytext); coluna += yyleng; return '*'; }
-"/"                         { fprintf(yyout,"Linha %d, Coluna %d: %s (DIV)\n", yylineno, coluna, yytext); coluna += yyleng; return '/'; }
-"%"                         { fprintf(yyout,"Linha %d, Coluna %d: %s (MOD)\n", yylineno, coluna, yytext); coluna += yyleng; return '%'; }
+"+"                         { coluna += yyleng; return '+'; }
+"-"                         { coluna += yyleng; return '-'; }
+"*"                         { coluna += yyleng; return '*'; }
+"/"                         { coluna += yyleng; return '/'; }
+"%"                         { coluna += yyleng; return '%'; }
 
 
-{op_logico_and}             { fprintf(yyout,"Linha %d, Coluna %d: %s (OPLOGICO_AND)\n", yylineno, coluna, yytext); coluna += yyleng; return OPLOGICO_AND; }
-{op_logico_or}              { fprintf(yyout,"Linha %d, Coluna %d: %s (OPLOGICO_OR)\n", yylineno, coluna, yytext); coluna += yyleng; return OPLOGICO_OR; }
-{op_logico_not}             { fprintf(yyout,"Linha %d, Coluna %d: %s (OPLOGICO_NOT)\n", yylineno, coluna, yytext); coluna += yyleng; return OPLOGICO_NOT; }
+{op_logico_and}             { coluna += yyleng; return OPLOGICO_AND; }
+{op_logico_or}              { coluna += yyleng; return OPLOGICO_OR; }
+{op_logico_not}             { coluna += yyleng; return OPLOGICO_NOT; }
 
-{tipos}                     { fprintf(yyout,"Linha %d, Coluna %d: %s (TIPOS)\n", linha, coluna, yytext); coluna += yyleng; return TIPOS;}
-{identificador}             { fprintf(yyout,"Linha %d, Coluna %d: %s (ID)\n", linha, coluna, yytext); inserir_simbolo(yytext);; coluna += yyleng; return ID;}
+{tipos}                     { coluna += yyleng; return TIPOS;}
+{identificador}             { inserir_simbolo(yytext);; coluna += yyleng; return ID;}
 
-{ponto_virgula}             { fprintf(yyout,"Linha %d, Coluna %d: %s (PONTOVIRGULA)\n", yylineno, coluna, yytext); coluna += yyleng; return PONTOVIRGULA; }
-{virgula}                   { fprintf(yyout,"Linha %d, Coluna %d: %s (VIRGULA)\n", yylineno, coluna, yytext); coluna += yyleng; return VIRGULA; }
-{parenteses_abre}           { fprintf(yyout,"Linha %d, Coluna %d: %s (ABRE_PAREN)\n", yylineno, coluna, yytext); coluna += yyleng; return ABRE_PAREN; }
-{parenteses_fecha}          { fprintf(yyout,"Linha %d, Coluna %d: %s (FECHA_PAREN)\n", yylineno, coluna, yytext); coluna += yyleng; return FECHA_PAREN; }
-{chave_abre}                { fprintf(yyout,"Linha %d, Coluna %d: %s (ABRE_CHAVE)\n", yylineno, coluna, yytext); coluna += yyleng; return ABRE_CHAVE; }
-{chave_fecha}               { fprintf(yyout,"Linha %d, Coluna %d: %s (FECHA_CHAVE)\n", yylineno, coluna, yytext); coluna += yyleng; return FECHA_CHAVE; }
+{ponto_virgula}             { coluna += yyleng; return PONTOVIRGULA; }
+{virgula}                   { coluna += yyleng; return VIRGULA; }
+{parenteses_abre}           { coluna += yyleng; return ABRE_PAREN; }
+{parenteses_fecha}          { coluna += yyleng; return FECHA_PAREN; }
+{chave_abre}                { coluna += yyleng; return ABRE_CHAVE; }
+{chave_fecha}               { coluna += yyleng; return FECHA_CHAVE; }
 
 
 {comentario_simples}        {}
