@@ -87,22 +87,22 @@ declaracao:
 
 lista_ids:
     ID
-    | ID ATRIBUICAO expressao_binaria                           /* int x = 5; */
+    | ID ATRIBUICAO expressao                           /* int x = 5; */
     | lista_ids VIRGULA ID                              /* int x, y; */
-    | lista_ids VIRGULA ID ATRIBUICAO expressao_binaria         /* int x, y = 10; */
+    | lista_ids VIRGULA ID ATRIBUICAO expressao         /* int x, y = 10; */
     ;
 
 atribuicao:
-    ID ATRIBUICAO expressao_binaria PONTOVIRGULA
+    ID ATRIBUICAO expressao PONTOVIRGULA
     ;
 
 condicional:
-    IF ABRE_PAREN expressao_binaria FECHA_PAREN comando %prec LOWER_THAN_ELSE
-    | IF ABRE_PAREN expressao_binaria FECHA_PAREN comando ELSE comando
+    IF ABRE_PAREN expressao FECHA_PAREN comando %prec LOWER_THAN_ELSE
+    | IF ABRE_PAREN expressao FECHA_PAREN comando ELSE comando
     ;
 
 laco:
-    WHILE ABRE_PAREN expressao_binaria FECHA_PAREN comando
+    WHILE ABRE_PAREN expressao FECHA_PAREN comando
     ;
 
 bloco:
@@ -116,30 +116,30 @@ entrada_saida:
     ;
 
  lista_expressoes:
-    expressao_binaria
-    | lista_expressoes VIRGULA expressao_binaria
+    expressao
+    | lista_expressoes VIRGULA expressao
     ; 
 
-expressao_binaria:
+expressao:
     fator
     /* ARITMÉTICAS */
-    | expressao_binaria '+' expressao_binaria
-    | expressao_binaria '-' expressao_binaria
-    | expressao_binaria '*' expressao_binaria
-    | expressao_binaria '/' expressao_binaria
-    | expressao_binaria '%' expressao_binaria
+    | expressao '+' expressao
+    | expressao '-' expressao
+    | expressao '*' expressao
+    | expressao '/' expressao
+    | expressao '%' expressao
     /* RELACIONAIS */
-    | expressao_binaria OPRELACIONAL expressao_binaria
+    | expressao OPRELACIONAL expressao
     /* LÓGICAS */
-    | expressao_binaria OPLOGICO_AND expressao_binaria
-    | expressao_binaria OPLOGICO_OR expressao_binaria
+    | expressao OPLOGICO_AND expressao
+    | expressao OPLOGICO_OR expressao
     ;
 
 fator:
     NUMERO
     | STRING
     | ID
-    | ABRE_PAREN expressao_binaria FECHA_PAREN
+    | ABRE_PAREN expressao FECHA_PAREN
     | '-' fator %prec UMINUS
     | '+' fator %prec UMINUS
     | OPLOGICO_NOT fator %prec OPLOGICO_NOT
