@@ -42,7 +42,7 @@
 %left OPRELACIONAL         
 %left '+' '-'              
 %left '*' '/' '%'           
-/*%right UMINUS                Menos unário: -x */
+%right UMINUS                  /* Menos unário: -x */
 %right OPLOGICO_NOT            /* Negação lógica: !x (maior precedência) */
 
 /* ========== RESOLVER DANGLING ELSE ========== */
@@ -63,6 +63,7 @@ inicio:
 lista_comandos:
     comando
     | lista_comandos comando
+    | lista_comandos error PONTOVIRGULA /* Recuperação adicional na lista */
     ;
 
 comando:
@@ -73,13 +74,12 @@ comando:
     | bloco
     | entrada_saida
     | PONTOVIRGULA              /* comando vazio */
+    | error PONTOVIRGULA        /* RECUPERAÇÃO: Descarta até o próximo ';' */
+    | error FECHA_CHAVE         /* RECUPERAÇÃO: Para erros antes de fechar um bloco */
     ;
 
 declaracao:
     TIPOS lista_ids PONTOVIRGULA
-    {
-        yyerror("Erro de Sintaxe: Ponto e vírgula (;) esperado após a lista de IDs na declaração.");
-    }
     ;
 
 lista_ids:
@@ -150,8 +150,8 @@ fator:
     | STRING
     | ID
     | ABRE_PAREN expressao FECHA_PAREN
-    | '-' fator /*%prec UMINUS                     menos unário: -5 */
-    | '+' fator /*%prec UMINUS                     mais unário: +5 */
+    | '-' fator %prec UMINUS /*                    menos unário: -5 */
+    | '+' fator %prec UMINUS /*                    mais unário: +5 */
     | OPLOGICO_NOT fator %prec OPLOGICO_NOT                           
     ;
 
@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
         yyout = stdout;
     }
 
-    printf("\n ============== ANALISADOR LÉXICO E SINTÁTICO INICIADO  ============== \n");
+    printf("\n ============== ANALISADOR SINTÁTICO INICIADO  ============== \n");
     
     int resultado = yyparse();
     
