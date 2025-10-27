@@ -63,7 +63,6 @@ inicio:
 lista_comandos:
     comando
     | lista_comandos comando
-    | lista_comandos error PONTOVIRGULA /* Recuperação adicional na lista */
     ;
 
 comando:
@@ -114,37 +113,28 @@ entrada_saida:
     | READ ABRE_PAREN ID FECHA_PAREN PONTOVIRGULA
     ;
 
-lista_expressoes:
+ lista_expressoes:
     expressao
     | lista_expressoes VIRGULA expressao
-    ;
+    ; 
 
 expressao:
-    expressao_logica
+    expressao_binaria
     ;
 
-expressao_logica:
-    expressao_relacional
-    | expressao_logica OPLOGICO_OR expressao_relacional        /* a || b */
-    | expressao_logica OPLOGICO_AND expressao_relacional    /* a && b */
-    ;
-
-expressao_relacional:
-    expressao_aritmetica
-    | expressao_aritmetica OPRELACIONAL expressao_aritmetica
-    ;
-
-expressao_aritmetica:
-    termo
-    | expressao_aritmetica '+' termo
-    | expressao_aritmetica '-' termo
-    ;
-
-termo:
+expressao_binaria:
     fator
-    | termo '*' fator
-    | termo '/' fator
-    | termo '%' fator
+    /* ARITMÉTICAS */
+    | expressao_binaria '+' expressao_binaria
+    | expressao_binaria '-' expressao_binaria
+    | expressao_binaria '*' expressao_binaria
+    | expressao_binaria '/' expressao_binaria
+    | expressao_binaria '%' expressao_binaria
+    /* RELACIONAIS */
+    | expressao_binaria OPRELACIONAL expressao_binaria
+    /* LÓGICAS */
+    | expressao_binaria OPLOGICO_AND expressao_binaria
+    | expressao_binaria OPLOGICO_OR expressao_binaria
     ;
 
 fator:
@@ -152,9 +142,9 @@ fator:
     | STRING
     | ID
     | ABRE_PAREN expressao FECHA_PAREN
-    | '-' fator %prec UMINUS                    /* menos unário: -5 */
-    | '+' fator %prec UMINUS                    /* mais unário: +5 */
-    | OPLOGICO_NOT fator %prec OPLOGICO_NOT                           
+    | '-' fator %prec UMINUS
+    | '+' fator %prec UMINUS
+    | OPLOGICO_NOT fator %prec OPLOGICO_NOT
     ;
 
 %%
