@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
 
     /*declaracoes definidas no analisador lexico*/
     extern int yylex(void);
@@ -10,24 +11,33 @@
     extern FILE *yyin;
     extern FILE *yyout;
     extern void imprimir_tabela();
+    extern void iniciar_analise();
+    extern void criar_escopo();
+    extern void excluir_escopo();
+    extern void inserir_simbolo(char *lexema, char *tipo);
     
     void yyerror(const char *s);
     int yyparse(void);
+    
+    char *tipo_atual = NULL;  // Armazena o tipo da declaração atual
 %}
 
 %define parse.error verbose
 
+%union {
+    char *sval;
+}
+
 /* ========== DEFINIÇÃO DOS TOKENS ========== */
 
 %token NUMERO STRING
-%token ID
+%token <sval> ID
+%token <sval> TIPOS
 
 %token OPRELACIONAL                 /* ==, !=, <, <=, >, >= */
 %token OPLOGICO_OR                  /* || */
 %token OPLOGICO_AND                 /* && */
 %token ATRIBUICAO                   /* = */         
-
-%token TIPOS                        /* int, bool */
 
 %token IF ELSE WHILE PRINT READ
 
@@ -81,16 +91,16 @@ comando:
     ;
 
 declaracao:
-    TIPOS lista_ids PONTOVIRGULA              
-    | TIPOS lista_ids error PONTOVIRGULA      {yyerrok;}        /* RECUPERAÇÃO: Descarta até o próximo ';' */
+    TIPOS { tipo_atual = $1; } lista_ids PONTOVIRGULA              
+    // | TIPOS { tipo_atual = $1; } lista_ids error PONTOVIRGULA { yyerrok; }
     ;
 
 
 lista_ids:
-    ID
-    | ID ATRIBUICAO expressao                              /* Ex: x = 5 */
-    | lista_ids VIRGULA ID                                 /* Ex: x, y */
-    | lista_ids VIRGULA ID ATRIBUICAO expressao            /* Ex: x, y = 10 */
+    ID { inserir_simbolo($1, tipo_atual); }
+    | ID ATRIBUICAO expressao { inserir_simbolo($1, tipo_atual); }
+    | lista_ids VIRGULA ID { inserir_simbolo($3, tipo_atual); }
+    | lista_ids VIRGULA ID ATRIBUICAO expressao { inserir_simbolo($3, tipo_atual); }
     ;
 
 atribuicao:
@@ -107,8 +117,8 @@ laco:
     ;
 
 bloco:
-    ABRE_CHAVE FECHA_CHAVE                              /* bloco vazio: {} */
-    | ABRE_CHAVE lista_comandos FECHA_CHAVE             /* bloco com comandos */
+    ABRE_CHAVE { criar_escopo(); } FECHA_CHAVE { excluir_escopo(); }
+    | ABRE_CHAVE { criar_escopo(); } lista_comandos FECHA_CHAVE { excluir_escopo(); }
     ;
 
 entrada_saida:
@@ -151,10 +161,10 @@ fator:
 /* ========== IMPLEMENTAÇÃO DAS FUNÇÕES ========== */
 
 void yyerror(const char *s) {
-    fprintf(stderr, "=============== ERRO SINTÁTICO DETECTADO =============== \n");
     fprintf(stderr, "Linha:  %d\n", yylineno);
     fprintf(stderr, "Coluna: %d\n", coluna);
     fprintf(stderr, "Informação do erro: %s \n", s);
+    fprintf(stderr, "Erro sintático: (Linha %d, Coluna %d)\n",  yylineno, coluna);
     fprintf(stderr, "Texto encontrado: %s \n", yytext);
     fprintf(stderr, "\n\n");
 }
@@ -173,6 +183,8 @@ int main(int argc, char **argv) {
     }
 
     printf("\n ============== ANALISADOR INICIADO  ============== \n");
+    
+    iniciar_analise();  // Cria o escopo global
     
     int resultado = yyparse();
     

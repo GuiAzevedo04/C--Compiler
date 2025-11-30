@@ -16,10 +16,19 @@ int coluna = 1;
 
 typedef struct Simbolo {
     char *lexema;
+    char *tipo;      
     struct Simbolo *prox;  // lista encadeada em caso de colisão
 } Simbolo;
 
-Simbolo *tabela[HASH_SIZE];  // vetor de listas
+typedef struct Escopo {
+    Simbolo *tabela[HASH_SIZE];
+    struct Escopo *anterior;  /* Ponteiro para o escopo pai */
+    int nivel;                
+} Escopo;
+
+/* Variável Global que aponta para o topo da pilha de escopos */
+Escopo *escopo_atual = NULL;
+int nivel_global = 0;
 
 unsigned int hash(char *lexema) {
     unsigned int h = 0;
@@ -29,34 +38,114 @@ unsigned int hash(char *lexema) {
     return h % HASH_SIZE;        // garante que caia dentro da tabela
 }
 
-void inserir_simbolo(char *lexema) {
-    unsigned int idx = hash(lexema);
-    Simbolo *atual = tabela[idx];
+/* Chamada quando encontra '{' */
+void criar_escopo() {
+    Escopo *novo = (Escopo *) malloc(sizeof(Escopo));
+    for (int i = 0; i < HASH_SIZE; i++) {
+        novo->tabela[i] = NULL;
+    }
+    novo->anterior = escopo_atual;
+    novo->nivel = nivel_global++;
+    escopo_atual = novo;
+    printf("Novo Escopo Criado (Nivel %d)\n", novo->nivel);
+}
 
-    // verifica se já existe
-    while (atual != NULL) {
-        if (strcmp(atual->lexema, lexema) == 0) {
-            return; // já existe, não insere
+/* Chamada quando encontra '}' */
+void excluir_escopo() {
+    if (escopo_atual == NULL) return;
+    
+    printf("Fechando Escopo (Nivel %d)\n", escopo_atual->nivel);
+    
+    Escopo *velho = escopo_atual;
+    escopo_atual = escopo_atual->anterior;
+    nivel_global--;
+    
+    // Libera os símbolos do escopo sendo fechado
+    for (int i = 0; i < HASH_SIZE; i++) {
+        Simbolo *s = velho->tabela[i];
+        while (s != NULL) {
+            Simbolo *temp = s;
+            s = s->prox;
+            free(temp->lexema);
+            free(temp->tipo);
+            free(temp);
         }
-        atual = atual->prox;
+    }
+    
+    free(velho);
+}
+
+void inserir_simbolo(char *lexema, char *tipo) {
+    if (escopo_atual == NULL) {
+        criar_escopo(); // Garante que existe ao menos um escopo global
+    }
+
+    unsigned int idx = hash(lexema);
+    Simbolo *s = escopo_atual->tabela[idx];
+
+    // verifica se já existe no escopo atual
+    while (s != NULL) {
+        if (strcmp(s->lexema, lexema) == 0) {
+            fprintf(stderr, "Erro semântico: (Linha %d, Coluna %d): Variavel '%s' ja declarada neste escopo.\n", 
+                    linha, coluna, lexema);
+            return; 
+        }
+        s = s->prox;
     }
 
     // cria novo símbolo
     Simbolo *novo = (Simbolo *) malloc(sizeof(Simbolo));
     novo->lexema = strdup(lexema);
-    novo->prox = tabela[idx];
-    tabela[idx] = novo;
+    novo->tipo = strdup(tipo);
+    novo->prox = escopo_atual->tabela[idx];
+    escopo_atual->tabela[idx] = novo;
+
+    printf("Declarado '%s' (tipo: %s) no escopo nivel %d\n", lexema, tipo, escopo_atual->nivel);
+}
+
+Simbolo* buscar_simbolo(char *lexema) {
+    Escopo *esc = escopo_atual;
+    
+    // Busca em todos os escopos, do mais interno para o mais externo
+    while (esc != NULL) {
+        unsigned int idx = hash(lexema);
+        Simbolo *s = esc->tabela[idx];
+        
+        while (s != NULL) {
+            if (strcmp(s->lexema, lexema) == 0) {
+                return s;  // Encontrou
+            }
+            s = s->prox;
+        }
+        
+        esc = esc->anterior;  // Vai para o escopo pai
+    }
+    
+    return NULL;  // Não encontrou em nenhum escopo
 }
 
 void imprimir_tabela() {
-    printf("\n=== TABELA DE SIMBOLOS ===\n");
-    for (int i = 0; i < HASH_SIZE; i++) {
-        Simbolo *atual = tabela[i];
-        while (atual != NULL) {
-            printf("%s\n", atual->lexema);
-            atual = atual->prox;
+    printf("\n=== TABELA DE SIMBOLOS (TODOS OS ESCOPOS) ===\n");
+    
+    Escopo *esc = escopo_atual;
+    while (esc != NULL) {
+        printf("\n--- Escopo Nivel %d ---\n", esc->nivel);
+        
+        for (int i = 0; i < HASH_SIZE; i++) {
+            Simbolo *atual = esc->tabela[i];
+            while (atual != NULL) {
+                printf("  %s (tipo: %s)\n", atual->lexema, atual->tipo);
+                atual = atual->prox;
+            }
         }
+        
+        esc = esc->anterior;
     }
+    printf("\n");
+}
+
+void iniciar_analise() {
+    criar_escopo();  // Cria o escopo global
 }
 
 %}
@@ -122,8 +211,8 @@ other                   .
 {op_logico_or}              { coluna += yyleng; return OPLOGICO_OR; }
 {op_logico_not}             { coluna += yyleng; return OPLOGICO_NOT; }
 
-{tipos}                     { coluna += yyleng; return TIPOS;}
-{identificador}             { inserir_simbolo(yytext);; coluna += yyleng; return ID;}
+{tipos}                     { yylval.sval = strdup(yytext); coluna += yyleng; return TIPOS;}
+{identificador}             { yylval.sval = strdup(yytext); coluna += yyleng; return ID;}
 
 {ponto_virgula}             { coluna += yyleng; return PONTOVIRGULA; }
 {virgula}                   { coluna += yyleng; return VIRGULA; }
@@ -142,8 +231,7 @@ other                   .
 } 
 {ws}                        { coluna += yyleng; } 
 {linha}                     { linha++; coluna = 1; } 
-{other}                     { fprintf(yyout, "Lexical error at line %d, column %d. Input -> \"%s\"\n", linha, coluna, yytext); coluna += yyleng; }
+{other}                     { fprintf(yyout, "Erro léxico: linha %d, coluna %d. Input -> \"%s\"\n", linha, coluna, yytext); coluna += yyleng; }
                     
 
 %%
-/* −−−−−−−−−−−−−−−−−−−−−−−− User subrotines −−−−−−−−−−−−−−−−−−−−−−−−*/
