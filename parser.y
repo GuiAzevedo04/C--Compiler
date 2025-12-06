@@ -3,29 +3,60 @@
     #include <stdlib.h>
     #include <string.h>
 
-    /*declaracoes definidas no analisador lexico*/
+    /*declarações definidas no analisador léxico*/
     extern int yylex(void);
     extern int yylineno;
     extern int coluna;
     extern char *yytext;
     extern FILE *yyin;
     extern FILE *yyout;
+
+    typedef struct Simbolo {
+        char *lexema;
+        char *tipo;      
+        struct Simbolo *prox;
+    } Simbolo;
+
+    extern Simbolo* buscar_simbolo(char *lexema);
     extern void imprimir_tabela();
     extern void iniciar_analise();
     extern void criar_escopo();
     extern void excluir_escopo();
     extern void inserir_simbolo(char *lexema, char *tipo);
+
+    extern void relatar_erro_semantico(const char *mensagem);
+    extern int verificar_tipo(char *tipo_esperado, char *tipo_encontrado);
     
     void yyerror(const char *s);
     int yyparse(void);
     
     char *tipo_atual = NULL;  // Armazena o tipo da declaração atual
+
 %}
 
 %define parse.error verbose
 
+%code requires {
+    typedef struct Ttype {
+        char *tipo_semantico;
+        char *valor;        
+        char *temporario;   
+    } Ttype;
+}
+
+%code {
+    Ttype* criar_ttype(char *tipo, char *valor) {
+        Ttype *t = (Ttype*) malloc(sizeof(Ttype));
+        t->tipo_semantico = tipo ? strdup(tipo) : NULL;
+        t->valor = valor ? strdup(valor) : NULL;
+        t->temporario = NULL;
+        return t;
+    }
+}
+
 %union {
     char *sval;
+    Ttype *ttype;
 }
 
 /* ========== DEFINIÇÃO DOS TOKENS ========== */
@@ -34,12 +65,14 @@
 %token <sval> ID
 %token <sval> TIPOS
 
+%type <ttype> expressao fator
+
 %token OPRELACIONAL                 /* ==, !=, <, <=, >, >= */
 %token OPLOGICO_OR                  /* || */
 %token OPLOGICO_AND                 /* && */
 %token ATRIBUICAO                   /* = */         
 
-%token IF ELSE WHILE PRINT READ
+%token IF ELSE WHILE PRINT READ TRUE_TOKEN FALSE_TOKEN
 
 %token PONTOVIRGULA VIRGULA         /* ; , */
 %token ABRE_CHAVE FECHA_CHAVE       /* { } */
@@ -98,22 +131,51 @@ declaracao:
 
 lista_ids:
     ID { inserir_simbolo($1, tipo_atual); }
-    | ID ATRIBUICAO expressao { inserir_simbolo($1, tipo_atual); }
+    | ID ATRIBUICAO expressao { 
+        if (!verificar_tipo(tipo_atual, $3->tipo_semantico)) {
+            relatar_erro_semantico("Erro na inicialização: Tipos incompatíveis.");
+        }
+        inserir_simbolo($1, tipo_atual);
+    }
     | lista_ids VIRGULA ID { inserir_simbolo($3, tipo_atual); }
-    | lista_ids VIRGULA ID ATRIBUICAO expressao { inserir_simbolo($3, tipo_atual); }
+    | lista_ids VIRGULA ID ATRIBUICAO expressao { 
+        if (!verificar_tipo(tipo_atual, $5->tipo_semantico)) { 
+            relatar_erro_semantico("Erro na inicialização: Tipos incompatíveis.");
+        }
+        inserir_simbolo($3, tipo_atual);
+    }
     ;
 
 atribuicao:
-    ID ATRIBUICAO expressao PONTOVIRGULA                   /* Ex: x = y + 1; */
+    ID ATRIBUICAO expressao PONTOVIRGULA {                  /* Ex: x = y + 1; */
+        Simbolo *s = buscar_simbolo($1);
+        if (s == NULL) {
+            relatar_erro_semantico("Atribuição: Variável não declarada.");
+        } else if (!verificar_tipo(s->tipo, $3->tipo_semantico)) {
+            relatar_erro_semantico("Atribuição: Tipos incompatíveis.");
+        }
+    }                   
     ;
 
 condicional:
-    IF ABRE_PAREN expressao FECHA_PAREN comando %prec LOWER_THAN_ELSE
-    | IF ABRE_PAREN expressao FECHA_PAREN comando ELSE comando
+    IF ABRE_PAREN expressao FECHA_PAREN comando %prec LOWER_THAN_ELSE {
+        if (!verificar_tipo("bool", $3->tipo_semantico)) {
+            relatar_erro_semantico("'if': Condição deve ser do tipo 'bool'.");
+        }
+    }
+    | IF ABRE_PAREN expressao FECHA_PAREN comando ELSE comando {
+        if (!verificar_tipo("bool", $3->tipo_semantico)) {
+            relatar_erro_semantico("'if': Condição deve ser do tipo 'bool'.");
+        }
+    }
     ;
 
 laco:
-    WHILE ABRE_PAREN expressao FECHA_PAREN comando
+    WHILE ABRE_PAREN expressao FECHA_PAREN comando {
+        if (!verificar_tipo("bool", $3->tipo_semantico)) {
+            relatar_erro_semantico("'while': Condição deve ser do tipo 'bool'.");
+        }
+    }
     ;
 
 bloco:
@@ -132,28 +194,68 @@ entrada_saida:
     ; 
 
 expressao:
-    fator
+    fator { $$ = $1; }
     /* ARITMÉTICAS */
-    | expressao '+' expressao
-    | expressao '-' expressao
-    | expressao '*' expressao
-    | expressao '/' expressao
-    | expressao '%' expressao
+    | expressao '+' expressao { if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) { relatar_erro_semantico("Operandos aritméticos devem ser do tipo 'int'."); } $$ = criar_ttype("int", NULL); }
+    | expressao '-' expressao { if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) { relatar_erro_semantico("Operandos aritméticos devem ser do tipo 'int'."); } $$ = criar_ttype("int", NULL); }
+    | expressao '*' expressao { if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) { relatar_erro_semantico("Operandos aritméticos devem ser do tipo 'int'."); } $$ = criar_ttype("int", NULL); }
+    | expressao '/' expressao { if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) { relatar_erro_semantico("Operandos aritméticos devem ser do tipo 'int'."); } $$ = criar_ttype("int", NULL); }
+    | expressao '%' expressao { if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) { relatar_erro_semantico("Operandos aritméticos devem ser do tipo 'int'."); } $$ = criar_ttype("int", NULL); }
     /* RELACIONAIS */
-    | expressao OPRELACIONAL expressao
+    | expressao OPRELACIONAL expressao {
+        if (!verificar_tipo("int", $1->tipo_semantico) || !verificar_tipo("int", $3->tipo_semantico)) {
+            relatar_erro_semantico("Operandos relacionais (==, <, etc.) devem ser do tipo 'int'.");
+        }
+        $$ = criar_ttype("bool", NULL);
+    }
     /* LÓGICAS */
-    | expressao OPLOGICO_AND expressao
-    | expressao OPLOGICO_OR expressao
+    | expressao OPLOGICO_AND expressao {
+        if (!verificar_tipo("bool", $1->tipo_semantico) || !verificar_tipo("bool", $3->tipo_semantico)) {
+            relatar_erro_semantico("Operandos lógicos (&&, ||) devem ser do tipo 'bool'.");
+        }
+        $$ = criar_ttype("bool", NULL);
+    }
+    | expressao OPLOGICO_OR expressao {
+        if (!verificar_tipo("bool", $1->tipo_semantico) || !verificar_tipo("bool", $3->tipo_semantico)) {
+            relatar_erro_semantico("Operandos lógicos (&&, ||) devem ser do tipo 'bool'.");
+        }
+        $$ = criar_ttype("bool", NULL);
+    }
     ;
 
 fator:
-    NUMERO
-    | STRING
-    | ID
-    | ABRE_PAREN expressao FECHA_PAREN
-    | '-' fator %prec UMINUS
-    | '+' fator %prec UMINUS
-    | OPLOGICO_NOT fator %prec OPLOGICO_NOT
+    NUMERO { $$ = criar_ttype("int", NULL); }
+    | STRING { $$ = criar_ttype("string", NULL); }
+    | TRUE_TOKEN { $$ = criar_ttype("bool", NULL); }
+    | FALSE_TOKEN { $$ = criar_ttype("bool", NULL); }
+    | ID { 
+        Simbolo *s = buscar_simbolo($1); 
+        if (s == NULL) {
+            relatar_erro_semantico("Identificador não declarado.");
+            $$ = criar_ttype("erro", NULL);
+        } else {
+            $$ = criar_ttype(s->tipo, NULL);
+        }
+    }
+    | ABRE_PAREN expressao FECHA_PAREN { $$ = $2; }
+    | '-' fator %prec UMINUS { 
+        if (!verificar_tipo("int", $2->tipo_semantico)) {
+            relatar_erro_semantico("Operador unário '-' aceita apenas 'int'.");
+        }
+        $$ = criar_ttype("int", NULL);
+    }
+    | '+' fator %prec UMINUS {
+        if (!verificar_tipo("int", $2->tipo_semantico)) {
+            relatar_erro_semantico("Operador unário '+' aceita apenas 'int'.");
+        }
+        $$ = criar_ttype("int", NULL);
+    }
+    | OPLOGICO_NOT fator %prec OPLOGICO_NOT {
+        if (!verificar_tipo("bool", $2->tipo_semantico)) {
+            relatar_erro_semantico("Operador unário '!' aceita apenas 'bool'.");
+        }
+        $$ = criar_ttype("bool", NULL);
+    }
     ;
 
 %%

@@ -134,7 +134,7 @@ void imprimir_tabela() {
         for (int i = 0; i < HASH_SIZE; i++) {
             Simbolo *atual = esc->tabela[i];
             while (atual != NULL) {
-                printf("  %s (tipo: %s)\n", atual->lexema, atual->tipo);
+                printf(" (identificador: %s)  (tipo: %s)\n", atual->lexema, atual->tipo);
                 atual = atual->prox;
             }
         }
@@ -146,6 +146,24 @@ void imprimir_tabela() {
 
 void iniciar_analise() {
     criar_escopo();  // Cria o escopo global
+}
+
+
+void relatar_erro_semantico(const char *mensagem) {
+    fprintf(stderr, "Erro semântico: (Linha %d, Coluna %d): %s\n", 
+            linha, coluna, mensagem);
+}
+
+// Retorna 1 se o tipo é compatível, 0 caso contrário
+int verificar_tipo(char *tipo_esperado, char *tipo_encontrado) {
+    // Se o tipo esperado ou encontrado for "erro", ignora (para evitar cascata)
+    if (tipo_encontrado == NULL || tipo_esperado == NULL || 
+        strcmp(tipo_encontrado, "erro") == 0) {
+        return 1; 
+    }
+    // Para atribuição, se o tipo for string, exigimos correspondência exata.
+    // Se for int/bool, vamos assumir que o sistema de tipos é estrito: int == int, bool == bool.
+    return (strcmp(tipo_esperado, tipo_encontrado) == 0);
 }
 
 %}
@@ -193,6 +211,8 @@ other                   .
 "while"                     { coluna += yyleng; return WHILE; }
 "print"                     { coluna += yyleng; return PRINT; }
 "read"                      { coluna += yyleng; return READ; }
+"true"                      { coluna += yyleng; return TRUE_TOKEN; }
+"false"                      { coluna += yyleng; return FALSE_TOKEN; }
 
 {numero_inteiro}            { coluna += yyleng; return NUMERO; }
 {string}                    { coluna += yyleng; return STRING; }
