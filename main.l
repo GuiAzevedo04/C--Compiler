@@ -211,12 +211,12 @@ other                   .
 "while"                     { coluna += yyleng; return WHILE; }
 "print"                     { coluna += yyleng; return PRINT; }
 "read"                      { coluna += yyleng; return READ; }
-"true"                      { coluna += yyleng; return TRUE_TOKEN; }
-"false"                      { coluna += yyleng; return FALSE_TOKEN; }
+"true"                      { yylval.sval = strdup("true");coluna += yyleng; return TRUE_TOKEN; }
+"false"                      { yylval.sval = strdup("false"); coluna += yyleng; return FALSE_TOKEN; }
 
-{numero_inteiro}            { coluna += yyleng; return NUMERO; }
-{string}                    { coluna += yyleng; return STRING; }
-{op_relacional}             { coluna += yyleng; return OPRELACIONAL;}
+{numero_inteiro}            { yylval.sval = strdup(yytext); coluna += yyleng; return NUMERO; }
+{string}                    { yylval.sval = strdup(yytext); coluna += yyleng; return STRING; }
+{op_relacional}             { yylval.sval = strdup(yytext); coluna += yyleng; return OPRELACIONAL;}
 
 {atribuicao}                { coluna += yyleng; return ATRIBUICAO;}
 
